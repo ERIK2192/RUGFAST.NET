@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rugfast.net - Launch Your Memecoin</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Rugfast.net</div>
+            <ul>
+                <li><a href="./index.html"><button class="active">Launch Memecoin</button></a></li>
+                <li><a href="./create-liquidity.html"><button>Create Liquidity</button></a></li>
+                <li><a href="./manage-liquidity.html"><button>Manage Liquidity</button></a></li>
+            </ul>
+        </nav>
+        <div class="hero">
+            <h1>Launch Your Memecoin on Solana</h1>
+            <p>Create and deploy your own token in seconds. No coding required. Pay in SOL and launch instantly!</p>
+            <p>Cheapest and fastest way to bring your ideas to life on the Solana blockchain.</p>
+        </div>
+    </header>
+
+    <section class="features">
+        <h2>Why Rugfast.net?</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>No-Code Creation</h3>
+                <p>Launch your memecoin without writing a single line of code.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Instant Deployment</h3>
+                <p>Your token goes live on Solana in seconds after payment.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Low Fees in SOL</h3>
+                <p>Starting at just 0.06 SOL + optional revoke fees.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="launch-form" class="launch-section">
+        <h2>Connect Your Wallet</h2>
+        <div class="wallet-connect">
+            <button id="connect-wallet-btn" class="submit-btn" onclick="connectPhantomWallet()">Connect Phantom Wallet</button>
+            <p id="wallet-address" class="note">Wallet not connected</p>
+            <a id="proceed-link" href="./configure-token.html" style="display: none;">
+                <button class="submit-btn">Proceed to Configure Token (0.06 SOL)</button>
+            </a>
+            <button id="simulate-btn" class="submit-btn" onclick="simulateWalletConnection()" style="margin-top: 1rem;">Simulate Connection (Test Mode)</button>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 Rugfast.net. Powered by Solana.</p>
+    </footer>
+
+    <script>
+        async function connectPhantomWallet() {
+            try {
+                if (!window.solana || !window.solana.isPhantom) {
+                    alert("Phantom Wallet is not installed! Please install it from phantom.app, or use 'Simulate Connection' for testing.");
+                    return;
+                }
+
+                const provider = window.solana;
+                const response = await provider.connect();
+                const publicKey = response.publicKey.toString();
+                document.getElementById("wallet-address").textContent = `Connected: ${publicKey.slice(0, 6)}...${publicKey.slice(-4)}`;
+                document.getElementById("connect-wallet-btn").style.display = "none";
+                document.getElementById("simulate-btn").style.display = "none";
+                document.getElementById("proceed-link").style.display = "block";
+            } catch (error) {
+                console.error("Error connecting wallet:", error);
+                alert("Failed to connect Phantom Wallet. Please try again or use 'Simulate Connection'.");
+            }
+        }
+
+        function simulateWalletConnection() {
+    const fakePublicKey = "TestWallet123...456";
+    document.getElementById("wallet-address").textContent = `Connected (Test): ${fakePublicKey}`;
+    document.getElementById("connect-wallet-btn").style.display = "none";
+    document.getElementById("simulate-btn").style.display = "none";
+    document.getElementById("proceed-link").style.display = "block";
+
+    // Spara simuleringsläge i localStorage
+    localStorage.setItem('testMode', 'true');
+    localStorage.setItem('fakePublicKey', fakePublicKey);
+
+    // Simulera Phantom API
+    window.solana = {
+        isConnected: true,
+        publicKey: { toString: () => fakePublicKey },
+        signAndSendTransaction: async () => "simulated-signature"
+    };
+}
+    </script>
+</body>
+</html>

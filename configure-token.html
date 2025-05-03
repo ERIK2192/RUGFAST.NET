@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Token - Rugfast.net</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Rugfast.net</div>
+            <ul>
+                <li><a href="./index.html"><button>Launch Memecoin</button></a></li>
+                <li><a href="./create-liquidity.html"><button>Create Liquidity</button></a></li>
+                <li><a href="./manage-liquidity.html"><button>Manage Liquidity</button></a></li>
+            </ul>
+        </nav>
+        <div class="hero">
+            <h1>Configure Your Memecoin</h1>
+            <p>Fill in your token details and customize revoke options. Total cost starts at 0.06 SOL.</p>
+        </div>
+    </header>
+
+    <section class="launch-section">
+        <h2>Create Your Token</h2>
+        <form class="token-form" onsubmit="launchToken(event)">
+            <label for="token-name">Token Name</label>
+            <input type="text" id="token-name" placeholder="e.g., MyMemeCoin" required>
+
+            <label for="token-symbol">Token Symbol</label>
+            <input type="text" id="token-symbol" placeholder="e.g., MMC" maxlength="8" required>
+            <label for="token-supply">Total Supply</label>
+            <input type="number" id="token-supply" placeholder="e.g., 1000000000" required>
+
+            <label for="decimals">Decimals</label>
+            <input type="number" id="decimals" placeholder="e.g., 6" min="0" max="9" required>
+
+            <h3>Revoke Options (0.06 SOL each)</h3>
+            <div class="revoke-options">
+                <label><input type="checkbox" id="revoke-mint" checked> Revoke Mint Authority</label>
+                <label><input type="checkbox" id="revoke-freeze" checked> Revoke Freeze Authority</label>
+                <label><input type="checkbox" id="revoke-update" checked> Revoke Update Authority</label>
+            </div>
+
+            <p id="total-cost" class="note">Total Cost: 0.24 SOL</p>
+            <button type="submit" class="submit-btn">Launch Token</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>© 2025 Rugfast.net. Powered by Solana.</p>
+    </footer>
+
+    <script>
+        // Uppdatera total kostnad dynamiskt
+        const checkboxes = document.querySelectorAll('.revoke-options input[type="checkbox"]');
+        const totalCostElement = document.getElementById('total-cost');
+
+        function updateTotalCost() {
+            const baseFee = 0.06; // Ny grundavgift
+            const revokeFee = 0.06; // Ny avgift per revoke option
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const totalCost = baseFee + (checkedCount * revokeFee);
+            totalCostElement.textContent = `Total Cost: ${totalCost.toFixed(2)} SOL`;
+            return totalCost;
+        }
+
+        checkboxes.forEach(cb => cb.addEventListener('change', updateTotalCost));
+        updateTotalCost(); // Kör vid laddning
+
+        // Simulera token-lansering
+        async function launchToken(event) {
+    event.preventDefault();
+
+    const isTestMode = localStorage.getItem('testMode') === 'true';
+    if (!isTestMode && (!window.solana || !window.solana.isConnected)) {
+        alert("Please connect your Phantom Wallet on the previous page!");
+        window.location.href = "./index.html";
+        return;
+    }
+
+    const tokenName = document.getElementById("token-name").value;
+    const tokenSymbol = document.getElementById("token-symbol").value;
+    const totalSupply = Number(document.getElementById("token-supply").value);
+    const decimals = Number(document.getElementById("decimals").value);
+    const revokeMint = document.getElementById("revoke-mint").checked;
+    const revokeFreeze = document.getElementById("revoke-freeze").checked;
+    const revokeUpdate = document.getElementById("revoke-update").checked;
+    const totalCost = updateTotalCost();
+    console.log("Total Cost:", totalCost); // Lägg till logg för felsökning
+
+    if (!totalCost || isNaN(totalCost)) {
+        alert("Error: Total cost is invalid!");
+        return;
+    }
+
+    try {
+        const provider = isTestMode ? { publicKey: { toString: () => localStorage.getItem('fakePublicKey') } } : window.solana;
+        const publicKey = provider.publicKey;
+
+        const response = await fetch('http://localhost:3000/create-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                publicKey: publicKey.toString(),
+                tokenName,
+                tokenSymbol,
+                totalSupply,
+                decimals,
+                revokeMint,
+                revokeFreeze,
+                revokeUpdate,
+                totalCost
+            })
+        });
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+
+        const signature = isTestMode ? "simulated-signature" : await provider.signAndSendTransaction(Transaction.from(Buffer.from(result.transaction, 'base64')));
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        alert(`Payment sent! Transaction Signature: ${signature}`);
+    } catch (error) {
+        console.error("Error launching token:", error);
+        alert("An error occurred: " + error.message);
+    }
+}
+        
+    </script>
+</body>
+</html>
